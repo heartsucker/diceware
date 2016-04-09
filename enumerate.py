@@ -43,6 +43,7 @@ def process_lang(language):
             words = [line.rstrip('\n') for line in f.readlines()]
 
             assert(len(words) == 7776)
+            assert(len(set(words)) == 7776)
 
             words_copy = copy.copy(words)
             words.sort()
