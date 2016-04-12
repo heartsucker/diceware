@@ -4,7 +4,7 @@
 Ensures wordlists are the correct size, and adds the dice lookup numbers.
 '''
 
-import copy, os, sys, traceback
+import copy, os, re, sys, traceback
 from os import listdir, path
 
 script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -35,9 +35,17 @@ def colorize(msg, color, bold=False):
         attrs.append('1')
     return '\x1b[{}m{}\x1b[0m'.format(';'.join(attrs), msg)
 
+valid_regex = re.compile('^[a-z0-9]{1,10}$')
 
-def process_lang(language):
-    print(colorize('Checking language ' + language, 'white'))
+
+def regex_test(words):
+    for word in words:
+        if valid_regex.match(word) is None:
+            raise Exception(word + ' is invalid')
+
+
+def check_7776_wordlist(language):
+    print('Checking 7776 wordlist for ' + language)
     try:
         with open(path.join(script_dir, 'wordlists', language, 'wordlist.txt'), 'r') as f:
             words = [line.rstrip('\n') for line in f.readlines()]
@@ -45,18 +53,56 @@ def process_lang(language):
             assert(len(words) == 7776)
             assert(len(set(words)) == 7776)
 
+            regex_test(words)
+
             words_copy = copy.copy(words)
             words.sort()
             assert(words == words_copy)
 
             write_file(words, language)
 
-            print(colorize('Success for ' + dir, 'green'))
+            print(colorize('Success for 7776 list for ' + language, 'green'))
             return True
     except:
-        print(colorize('Failure for ' + dir, 'red'))
+        print(colorize('Failure for 7776 list for ' + language, 'red'))
         traceback.print_exc(file=sys.stdout)
         return False
+
+
+def check_8192_wordlist(language):
+    print('Checking 8192 wordlist for ' + language)
+
+    file_name = path.join(script_dir, 'wordlists', language, 'wordlist-8192.txt')
+    if not os.path.isfile(file_name):
+        print(colorize('8192 wordlist not found for ' + language, 'yellow'))
+        return True
+
+    try:
+        with open(file_name, 'r') as f:
+            words = [line.rstrip('\n') for line in f.readlines()]
+
+            assert(len(words) == 8192)
+            assert(len(set(words)) == 8192)
+
+            regex_test(words)
+
+            words_copy = copy.copy(words)
+            words.sort()
+            assert(words == words_copy)
+
+            print(colorize('Success for 8192 list for ' + language, 'green'))
+            return True
+    except:
+        print(colorize('Failure for 8192 list for ' + language, 'red'))
+        traceback.print_exc(file=sys.stdout)
+        return False
+
+
+def process_lang(language):
+    print(colorize('Checking language ' + language, 'white'))
+    result_7776 = check_7776_wordlist(language)
+    result_8192 = check_8192_wordlist(language)
+    return result_7776 and result_8192
 
 
 def write_file(words, language):
@@ -77,11 +123,7 @@ def baseN(num, b, numerals='0123456789abcdef'):
 def dice_num(num):
     ret = list()
     for char in str(baseN(num, 6)).zfill(5):
-        try:
-            char = chr(ord(char) + 1)
-        except ValueError:
-            pass
-        ret.append(char)
+        ret.append(chr(ord(char) + 1))
     return ''.join(ret)
 
 if (__name__ == '__main__'):
