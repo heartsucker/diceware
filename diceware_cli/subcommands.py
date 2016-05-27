@@ -41,19 +41,18 @@ def _init_language(language):
 def _load_file_into_db(language, state, f, allow_updates):
     assert(state in word_states)
     for line in f.readlines():
-        word = line.rstrip('\n')
+        word = line.strip()
 
-        if _valid_regex.match(word) is None:
-            break
+        if _valid_regex.match(word) is not None:
 
-        db_word = db_session.query(WordList).filter(WordList.language == language) \
-            .filter(WordList.word == word).one_or_none()
+            db_word = db_session.query(WordList).filter(WordList.language == language) \
+                .filter(WordList.word == word).one_or_none()
 
-        if db_word is not None:
-            if allow_updates:
-                db_word.state = state
-        else:
-            db_session.add(WordList(word=word, state=state, language=language))
+            if db_word is not None:
+                if allow_updates:
+                    db_word.state = state
+            else:
+                db_session.add(WordList(word=word, state=state, language=language))
 
     db_session.commit()
 
@@ -84,7 +83,7 @@ def finalize(args):
 
 
 # TODO this will have to change for other languages
-_valid_regex = re.compile('^[a-z]{2,10}$')
+_valid_regex = re.compile('^[a-z]{3,10}$')
 
 
 def _regex_test(words):
@@ -119,7 +118,7 @@ def _check_7776_wordlist(language, rejected):
 
             _regex_test(words)
 
-            words_copy = sorted(copy.copy(words))
+            words_copy = sorted(words)
             assert(words == words_copy)
 
             _write_numbered_file(words, language)
@@ -172,7 +171,7 @@ def _get_rejected_words(language):
 
     with open(file_name, 'r') as f:
         rejects = [line.rstrip('\n') for line in f.readlines()]
-        rejects_copy = sorted(copy.copy(rejects))
+        rejects_copy = sorted(copyrejects)
         # because I'm pedantic and want everything sorted
         assert(rejects == rejects_copy)
         assert(len(set(rejects)) == len(rejects))
@@ -212,15 +211,24 @@ def _dice_num(num):
 
 
 def select_words(args):
-    query = db_session.query(WordList).filter(WordList.language == args.language) \
+    query = db_session.query(WordList).filter(WordList.language == args.language)
 
     if args.include_skipped:
         query = query.filter(or_(WordList.state == 'pending', WordList.state == 'skipped'))
     else:
         query = query.filter(WordList.state == 'pending')
 
-    for word in query.order_by(func.random()).all():
+    query = query.order_by(func.length(WordList.word))
+    word = query.first()
+
+    while word is not None:
         _cli_input_for_word(word)
+        word = query.first()
+
+    if args.include_skipped:
+        print('DB has no more words in \'pending\' or \'skipped \' state')
+    else:
+        print('DB has no more words in \'pending\' state')
 
 
 def _cli_input_for_word(word):
@@ -254,8 +262,7 @@ def _dump_rejected(language):
     words = db_session.query(WordList).filter(WordList.language == language) \
         .filter(WordList.state == 'rejected').all()
 
-    words = list(map(lambda w: w.word, words))
-    words.sort()
+    words = sorted(list(map(lambda w: w.word, words)))
 
     with open(path.join(base_dir, 'wordlists', language, 'rejected.txt'), 'w') as f:
         for word in words:
@@ -266,8 +273,7 @@ def _dump_accepted(language):
     words = db_session.query(WordList).filter(WordList.language == language) \
         .filter(WordList.state == 'accepted').all()
 
-    words = list(map(lambda w: w.word, words))
-    words.sort()
+    words = sorted(list(map(lambda w: w.word, words)))
 
     with open(path.join(base_dir, 'wordlists', language, 'wordlist.txt'), 'w') as f:
         for word in words:
@@ -275,6 +281,7 @@ def _dump_accepted(language):
 
 
 def db_state(args):
+    engine.execute('vacuum')
     statuses = db_session.query(WordList.language, WordList.state, func.count(WordList.word)) \
         .group_by(WordList.language, WordList.state) \
         .order_by(WordList.language, WordList.state).all()

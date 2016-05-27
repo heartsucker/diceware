@@ -99,5 +99,9 @@ def get_args(cli_args):
     return parser.parse_args(cli_args)
 
 if __name__ == '__main__':
-    args = get_args(argv[1:])
-    args.func(args)
+    try:
+        args = get_args(argv[1:])
+        args.func(args)
+    except KeyboardInterrupt:
+        print('')  # for a pretty newline
+        exit(1)
