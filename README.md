@@ -13,6 +13,12 @@ For the curious, the full diff from the original list can be shown using:
 diff wordlists/en_US/wordlist.txt <(wget -q http://world.std.com/~reinhold/diceware.wordlist.asc -O - | tail -n +3 | head -7776 | awk '{ print $NF }' | sort)
 ```
 
+## Hacking
+
+Set up the dev environment with `setup.sh`.
+
+Run all the dev tasks with `cli.py`.
+
 ## License / Credits
 
 In compliance with the `CC-BY-3.0` license, this work was made with modifications and is based on the work of A G Reinhold.
