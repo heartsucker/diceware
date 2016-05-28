@@ -70,8 +70,8 @@ def finalize(args):
     print(colorize('Checking wordlists...', 'white', True))
     all_valid = True
 
-    for dir in os.listdir(path.join(base_dir, 'wordlists')):
-        is_valid = _process_lang(base_dir, dir)
+    for d in os.listdir(path.join(base_dir, 'wordlists')):
+        is_valid = _process_lang(d)
         all_valid = all_valid and is_valid
 
     if all_valid:
@@ -171,7 +171,7 @@ def _get_rejected_words(language):
 
     with open(file_name, 'r') as f:
         rejects = [line.rstrip('\n') for line in f.readlines()]
-        rejects_copy = sorted(copyrejects)
+        rejects_copy = sorted(rejects)
         # because I'm pedantic and want everything sorted
         assert(rejects == rejects_copy)
         assert(len(set(rejects)) == len(rejects))
