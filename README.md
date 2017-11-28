@@ -6,6 +6,12 @@ An improvement on the original `diceware` list, originally published by A G Rein
 
 Instructions on how to use diceware passphrases can be found [here](http://world.std.com/~reinhold/diceware.html).
 
+## In the Wild
+
+This list was used by [SecureDrop](https://securedrop.org) and was introduced via
+[this commit](https://github.com/freedomofpress/securedrop/commit/ff87f9a01feece5574ac2363919778b30efc2f65).
+It is also used by the [Python diceware CLI](https://github.com/ulif/diceware).
+
 ## diff
 For the curious, the full diff from the original list can be shown using:
 
